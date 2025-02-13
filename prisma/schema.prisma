@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Cidade {
+  cidade_id   Int       @id
+  cidade_nome String
+  Cliente     Cliente[]
+}
+
+model Cliente {
+  cliente_id       Int            @id
+  cliente_nome     String
+  cliente_cnpj_cpf String         @unique
+  filial           Int            @default(1)
+  cidade_id        Int
+  cidade           Cidade         @relation(fields: [cidade_id], references: [cidade_id])
+  VersaoPDV        VersaoPDV[]
+  BackupVersao     BackupVersao[]
+}
+
+model VersaoPDV {
+  pdv_numero      Int     @id
+  revisao         String
+  data_compilacao String
+  versao          String
+  sistema_op      String
+  cliente_id      Int
+  cliente         Cliente @relation(fields: [cliente_id], references: [cliente_id])
+}
+
+model BackupVersao {
+  bkp_id                   Int     @id
+  bkp_srv_espaco_livre     Int?
+  bkp_ultimo_sgerp_cliente String?
+  bkp_ultimo_sgdfe         String?
+  bkp_local_sgdfe          String?
+  bkp_local_sgerp          String?
+  bkp_ultimo_automatico    String?
+  bkp_tamanho_sgdfe        String?
+  bkp_tamanho_sgerp        String?
+  script_md5               String?
+  script_retorno_update    String?
+  script_ultima_comunicao  String?
+  sgerp_versao_sgerp       String?
+  sgerp_revisao            String?
+  sgerp_compilacao         String?
+  vers_sgdfe               String?
+
+  cliente_id Int
+  cliente    Cliente @relation(fields: [cliente_id], references: [cliente_id])
+}
