@@ -57,7 +57,10 @@ export async function updateVersaoPdv(app: FastifyInstance) {
               } else {
                 const pdv = await prisma.versaoPDV.upsert({
                   where: {
-                    pdv_numero: Numero,
+                    pdv_numero_cliente_id: {
+                      pdv_numero: Numero,
+                      cliente_id: cliente.cliente_id,
+                    },
                   },
                   update: {
                     versao: Versao,
