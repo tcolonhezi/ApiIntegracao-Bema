@@ -5,11 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: botwp-docker-app
+    container_name: ApiIntegracao-bema
     ports:
       - "3335:3335"
     volumes:
-      - /sgs/bot-app/projeto-bot-webjs-ts/:/usr/src/app  # Montar código fonte local
+      - /sgs/api-integracao/ApiIntegracao-Bema/:/usr/src/app  # Montar código fonte local
     environment:
       - DEBIAN_FRONTEND=noninteractive
     restart: always  # Reiniciar automaticamente o container se ele falhar
