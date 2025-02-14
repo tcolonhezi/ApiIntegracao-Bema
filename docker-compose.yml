@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: botwp-docker-app
+    ports:
+      - "3335:3335"
+    volumes:
+      - /sgs/bot-app/projeto-bot-webjs-ts/:/usr/src/app  # Montar código fonte local
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+    restart: always  # Reiniciar automaticamente o container se ele falhar
