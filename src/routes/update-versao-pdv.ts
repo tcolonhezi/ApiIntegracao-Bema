@@ -22,6 +22,7 @@ export async function updateVersaoPdv(app: FastifyInstance) {
               .transform((val) => parseInt(val)),
             Cnpj: z.string(),
             Versao: z.string(),
+            Datainativ: z.string(),
             Revisao: z.string(),
             Datacomp: z.string(),
             Versaoso: z.string(),
@@ -34,37 +35,51 @@ export async function updateVersaoPdv(app: FastifyInstance) {
       const pdvs = request.body;
       const updatedPdvs = await Promise.all(
         pdvs.map(
-          async ({ Numero, Versao, Revisao, Datacomp, Versaoso, Cnpj }) => {
-            const cliente = await prisma.cliente.findUnique({
-              where: {
-                cliente_cnpj_cpf: Cnpj,
-              },
-            });
-
-            if (!cliente) {
-              reply.status(404).send({ message: "Cliente não encontrado" });
-              return null;
-            } else {
-              const pdv = await prisma.versaoPDV.upsert({
+          async ({
+            Numero,
+            Versao,
+            Revisao,
+            Datacomp,
+            Versaoso,
+            Cnpj,
+            Datainativ,
+          }) => {
+            if (Datainativ == "") {
+              const cliente = await prisma.cliente.findUnique({
                 where: {
-                  pdv_numero: Numero,
-                },
-                update: {
-                  versao: Versao,
-                  revisao: Revisao,
-                  data_compilacao: Datacomp,
-                  sistema_op: Versaoso,
-                },
-                create: {
-                  pdv_numero: Numero,
-                  versao: Versao,
-                  revisao: Revisao,
-                  data_compilacao: Datacomp,
-                  sistema_op: Versaoso,
-                  cliente_id: cliente.cliente_id,
+                  cliente_cnpj_cpf: Cnpj,
                 },
               });
-              return pdv;
+
+              if (!cliente) {
+                reply.status(404).send({ message: "Cliente não encontrado" });
+                return null;
+              } else {
+                const pdv = await prisma.versaoPDV.upsert({
+                  where: {
+                    pdv_numero: Numero,
+                  },
+                  update: {
+                    versao: Versao,
+                    revisao: Revisao,
+                    data_compilacao: Datacomp,
+                    sistema_op: Versaoso,
+                  },
+                  create: {
+                    pdv_numero: Numero,
+                    versao: Versao,
+                    revisao: Revisao,
+                    data_compilacao: Datacomp,
+                    sistema_op: Versaoso,
+                    cliente_id: cliente.cliente_id,
+                  },
+                });
+                return pdv;
+              }
+            } else {
+              console.log(
+                "Ignorando PDV " + Numero + " Inativado em:" + Datainativ
+              );
             }
           }
         )
