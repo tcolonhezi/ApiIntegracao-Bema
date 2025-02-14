@@ -28,13 +28,15 @@ model Cliente {
 }
 
 model VersaoPDV {
-  pdv_numero      Int     @id
+  pdv_numero      Int
   revisao         String
   data_compilacao String
   versao          String
   sistema_op      String
   cliente_id      Int
   cliente         Cliente @relation(fields: [cliente_id], references: [cliente_id])
+
+  @@id([pdv_numero, cliente_id]) // Define uma chave primária composta
 }
 
 model BackupVersao {

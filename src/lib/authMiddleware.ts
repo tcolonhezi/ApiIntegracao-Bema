@@ -6,7 +6,6 @@ export const authHook = async (
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
-  console.log(request.headers);
   const TOKEN = process.env.TOKEN_API;
 
   try {
