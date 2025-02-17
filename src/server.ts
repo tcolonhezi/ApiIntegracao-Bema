@@ -5,7 +5,9 @@ import {
   validatorCompiler,
 } from "fastify-type-provider-zod";
 import { updateVersaoPdv } from "./routes/update-versao-pdv";
-import { authHook } from "./lib/authMiddleware";
+import { authHooks } from "./lib/authMiddleware";
+import { inserirCliente } from "./routes/create-cliente";
+import { inserirAlterarMunicipio } from "./routes/upsert-municipio";
 
 const app = fastify();
 
@@ -16,12 +18,17 @@ app.register(fastifyCors, {
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-// Registre as rotas protegidas com o hook de autenticação
 app.register(async function (fastify) {
-  // Aplica o hook apenas nas rotas dentro deste contexto
-  fastify.addHook("preHandler", authHook);
-  // Suas rotas protegidas aqui
+  fastify.addHook("preHandler", authHooks.any);
   fastify.register(updateVersaoPdv);
+});
+
+// Rotas que requerem nível admin
+app.register(async function (fastify) {
+  fastify.addHook("preHandler", authHooks.admin);
+
+  fastify.register(inserirCliente);
+  fastify.register(inserirAlterarMunicipio);
 });
 
 app.listen({ port: 3335, host: "0.0.0.0" }).then(() => {

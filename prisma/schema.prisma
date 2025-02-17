@@ -11,17 +11,19 @@ datasource db {
 }
 
 model Cidade {
-  cidade_id   Int       @id
+  cidade_id   Int       @id @default(autoincrement())
   cidade_nome String
   Cliente     Cliente[]
 }
 
 model Cliente {
-  cliente_id       Int            @id
+  cliente_id       Int            @id @default(autoincrement())
   cliente_nome     String
   cliente_cnpj_cpf String         @unique
   filial           Int            @default(1)
   cidade_id        Int
+  codigo_sg        Int
+  razao_social     String
   cidade           Cidade         @relation(fields: [cidade_id], references: [cidade_id])
   VersaoPDV        VersaoPDV[]
   BackupVersao     BackupVersao[]
