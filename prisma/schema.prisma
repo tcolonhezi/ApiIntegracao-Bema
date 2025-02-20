@@ -27,6 +27,7 @@ model Cliente {
   cidade           Cidade         @relation(fields: [cidade_id], references: [cidade_id])
   VersaoPDV        VersaoPDV[]
   BackupVersao     BackupVersao[]
+  ClientEnv        ClienteEnv[]
 }
 
 model VersaoPDV {
@@ -61,4 +62,29 @@ model BackupVersao {
 
   cliente_id Int
   cliente    Cliente @relation(fields: [cliente_id], references: [cliente_id])
+}
+
+model ClienteEnv {
+  id                                Int      @id @default(autoincrement())
+  cliente_id                        Int
+  description                       String?
+  caminho_parame                    String?
+  caminho_backup_sgdfe              String?
+  caminho_backup_automatico         String?
+  page_notion                       String?
+  origem_backup                     String?
+  padrao                            String?
+  repo_dir                          String?
+  cloud_sgdfe                       String?
+  cloud_sgerp                       String?
+  remote_server                     String?
+  bucket_name                       String?
+  deleta_backup_local               String?
+  caminho_backup_seguranca          String?
+  nao_realiza_correcao_parame_sgdfe String?
+  sgdfe_cloud                       String?
+  createdAt                         DateTime @default(now())
+  updatedAt                         DateTime @updatedAt
+
+  cliente Cliente @relation(fields: [cliente_id], references: [cliente_id])
 }
