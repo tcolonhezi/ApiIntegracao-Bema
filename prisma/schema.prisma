@@ -36,6 +36,7 @@ model VersaoPDV {
   versao          String
   sistema_op      String
   cliente_id      Int
+  ultima_abertura String?
   cliente         Cliente @relation(fields: [cliente_id], references: [cliente_id])
 
   @@id([pdv_numero, cliente_id]) // Define uma chave primária composta
