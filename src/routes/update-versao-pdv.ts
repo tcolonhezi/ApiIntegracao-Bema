@@ -27,6 +27,7 @@ export async function updateVersaoPdv(app: FastifyInstance) {
             Datacomp: z.string(),
             Versaoso: z.string(),
             Dataaberto: z.string().optional(),
+            Datafecha: z.string().optional(),
           })
         ),
       },
@@ -45,6 +46,7 @@ export async function updateVersaoPdv(app: FastifyInstance) {
             Cnpj,
             Datainativ,
             Dataaberto,
+            Datafecha,
           }) => {
             if (Datainativ == "") {
               const cliente = await prisma.cliente.findUnique({
@@ -70,6 +72,7 @@ export async function updateVersaoPdv(app: FastifyInstance) {
                     data_compilacao: Datacomp,
                     sistema_op: Versaoso,
                     ultima_abertura: Dataaberto,
+                    ultimo_fechamento: Datafecha,
                   },
                   create: {
                     pdv_numero: Numero,
@@ -79,6 +82,7 @@ export async function updateVersaoPdv(app: FastifyInstance) {
                     sistema_op: Versaoso,
                     cliente_id: cliente.cliente_id,
                     ultima_abertura: Dataaberto,
+                    ultimo_fechamento: Datafecha,
                   },
                 });
                 return pdv;
