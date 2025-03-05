@@ -8,6 +8,7 @@ import { updateVersaoPdv } from "./routes/update-versao-pdv";
 import { authHooks } from "./lib/authMiddleware";
 import { inserirCliente } from "./routes/create-cliente";
 import { inserirAlterarMunicipio } from "./routes/upsert-municipio";
+import { getClientes } from "./routes/get-clientes";
 
 const app = fastify();
 
@@ -29,6 +30,7 @@ app.register(async function (fastify) {
 
   fastify.register(inserirCliente);
   fastify.register(inserirAlterarMunicipio);
+  fastify.register(getClientes);
 });
 
 app.listen({ port: 3335, host: "0.0.0.0" }).then(() => {
