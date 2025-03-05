@@ -61,6 +61,13 @@ export async function getClientes(app: FastifyInstance) {
                       contains: query,
                     },
                   },
+                  {
+                    cidade: {
+                      cidade_nome: {
+                        contains: query,
+                      },
+                    },
+                  },
                 ],
               }
             : {},
@@ -87,6 +94,13 @@ export async function getClientes(app: FastifyInstance) {
                   {
                     cliente_cnpj_cpf: {
                       contains: query,
+                    },
+                  },
+                  {
+                    cidade: {
+                      cidade_nome: {
+                        contains: query,
+                      },
                     },
                   },
                 ],
