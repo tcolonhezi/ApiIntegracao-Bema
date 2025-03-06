@@ -1,7 +1,8 @@
 import { prisma } from "./../lib/prisma";
-import { fastify, FastifyInstance } from "fastify";
+import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { string, z } from "zod";
+import { z } from "zod";
+
 export async function getClientes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
     "/clientes",
