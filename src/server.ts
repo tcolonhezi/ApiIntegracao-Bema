@@ -12,6 +12,7 @@ import { getClientes } from "./routes/get-clientes";
 import { getCliente } from "./routes/get-cliente";
 import { getClientesPdvsStatus } from "./routes/get-clientes-pdvs-status";
 import { getDashboardPdv } from "./routes/get-dashboard-pdvs";
+import { updateBackupServidor } from "./routes/update-servidor-backup";
 
 const app = fastify();
 
@@ -25,6 +26,7 @@ app.setSerializerCompiler(serializerCompiler);
 app.register(async function (fastify) {
   fastify.addHook("preHandler", authHooks.any);
   fastify.register(updateVersaoPdv);
+  fastify.register(updateBackupServidor);
 });
 
 // Rotas que requerem nível admin

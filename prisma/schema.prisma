@@ -44,23 +44,32 @@ model VersaoPDV {
 }
 
 model BackupVersao {
-  bkp_id                   Int     @id
-  bkp_srv_espaco_livre     Int?
-  bkp_ultimo_sgerp_cliente String?
-  bkp_ultimo_sgdfe         String?
-  bkp_local_sgdfe          String?
-  bkp_local_sgerp          String?
-  bkp_ultimo_automatico    String?
-  bkp_tamanho_sgdfe        String?
-  bkp_tamanho_sgerp        String?
-  script_md5               String?
-  script_retorno_update    String?
-  script_ultima_comunicao  String?
-  sgerp_versao_sgerp       String?
-  sgerp_revisao            String?
-  sgerp_compilacao         String?
-  vers_sgdfe               String?
+  bkp_id                         Int      @id @default(autoincrement())
+  bkp_srv_espaco_livre           Int?
+  bkp_ultimo_sgerp_cliente       String?
+  bkp_ultimo_sgdfe               String?
+  bkp_local_sgdfe                String?
+  bkp_local_sgerp                String?
+  bkp_ultimo_automatico          String?
+  bkp_tamanho_sgdfe              String?
+  bkp_tamanho_sgerp              String?
+  script_md5                     String?
+  script_retorno_update          String?
+  script_ultima_comunicao        String?
+  sgerp_versao_sgerp             String?
+  sgerp_revisao                  String?
+  sgerp_compilacao               String?
+  versao_sgdfe                   String?
+  cloud                          Boolean?
+  cloud_sgdfe                    String?
+  cloud_sgerp                    String?
+  local_bkp_seguranca            String?
+  tamanho_backup_seguranca_sgerp String?
+  tamanho_backup_seguranca_sgdfe String?
+  env_cliente                    String?
 
   cliente_id Int
   cliente    Cliente @relation(fields: [cliente_id], references: [cliente_id])
+
+  @@unique([cliente_id, bkp_id])
 }
