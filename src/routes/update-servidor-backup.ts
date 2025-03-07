@@ -14,8 +14,12 @@ export async function updateBackupServidor(app: FastifyInstance) {
           bkp_srv_espaco_livre: z
             .string()
             .optional()
-            .transform((value) => value?.replace(/\D/g, ""))
-            .transform(Number),
+            .transform((value) =>
+              value ? value.replace(/\D/g, "") : undefined
+            )
+            .transform((value) =>
+              value !== undefined ? Number(value) : undefined
+            ),
           bkp_ultimo_sgerp_cliente: z.string().optional(),
           bkp_ultimo_sgdfe: z.string().optional(),
           bkp_local_sgdfe: z.string().optional(),
@@ -32,7 +36,9 @@ export async function updateBackupServidor(app: FastifyInstance) {
           cloud: z.boolean().optional(),
           cloud_sgdfe: z.string().optional(),
           cloud_sgerp: z.string().optional(),
-          bkp_seguranca: z.string().optional(),
+          local_bkp_seguranca: z.string().optional(),
+          tamanho_backup_seguranca_sgdfe: z.string().optional(),
+          tamanho_backup_seguranca_sgerp: z.string().optional(),
           env_cliente: z.string().optional(),
         }),
       },
@@ -57,7 +63,9 @@ export async function updateBackupServidor(app: FastifyInstance) {
         cloud,
         cloud_sgdfe,
         cloud_sgerp,
-        bkp_seguranca,
+        local_bkp_seguranca,
+        tamanho_backup_seguranca_sgerp,
+        tamanho_backup_seguranca_sgdfe,
         env_cliente,
       } = request.body;
       console.log(request.body);
@@ -113,7 +121,9 @@ export async function updateBackupServidor(app: FastifyInstance) {
             cloud,
             cloud_sgdfe,
             cloud_sgerp,
-            bkp_seguranca,
+            local_bkp_seguranca,
+            tamanho_backup_seguranca_sgerp,
+            tamanho_backup_seguranca_sgdfe,
             env_cliente,
           },
         });
@@ -139,7 +149,9 @@ export async function updateBackupServidor(app: FastifyInstance) {
             cloud,
             cloud_sgdfe,
             cloud_sgerp,
-            bkp_seguranca,
+            local_bkp_seguranca,
+            tamanho_backup_seguranca_sgerp,
+            tamanho_backup_seguranca_sgdfe,
             env_cliente,
           },
         });
