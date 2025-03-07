@@ -2,6 +2,7 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { FastifyInstance } from "fastify";
 import { prisma } from "./../lib/prisma";
+import { verificarVersao } from "../functions/pdvs-utils";
 
 // Definição dos schemas Zod
 const PDVDesatualizadoSchema = z.object({

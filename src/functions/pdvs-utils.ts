@@ -6,7 +6,7 @@ const versoes = [
   { data: "04/10/2024", revisao: 31158 },
 ];
 
-function verificarVersao(versao: string, revisao: string) {
+export function verificarVersao(versao: string, revisao: string) {
   const versaoEncontrada = versoes.find((v) => v.data === versao.split("-")[1]);
 
   if (versaoEncontrada) {

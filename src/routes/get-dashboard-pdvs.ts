@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { FastifyInstance } from "fastify";
 import { prisma } from "./../lib/prisma";
+import { verificarVersao } from "../functions/pdvs-utils";
 
 // Tipos para garantir a correta tipagem do TypeScript
 type TipoDesatualizacao =
