@@ -36,28 +36,6 @@ const DashboardSchema = z.object({
     .optional(),
 });
 
-// Lista de versões conforme fornecido
-const versoes = [
-  { data: "OK-17/05/2025", revisao: 31161 },
-  { data: "OK-14/06/2024", revisao: 31160 },
-  { data: "OK-09/08/2024", revisao: 31159 },
-  { data: "OK-04/10/2024", revisao: 31158 },
-];
-
-function verificarVersao(
-  versao: string,
-  revisao: string
-): "Atualizado" | TipoDesatualizacao {
-  const versaoEncontrada = versoes.find((v) => v.data === versao);
-
-  if (versaoEncontrada) {
-    return Number(revisao) >= versaoEncontrada.revisao
-      ? "Atualizado"
-      : "Desatualizado (Revisão)";
-  }
-  return "Versão não encontrada (Atualizar)";
-}
-
 export async function getDashboardPdv(app: FastifyInstance) {
   app.get(
     "/dashboardPdvs",
