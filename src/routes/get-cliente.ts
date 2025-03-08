@@ -1,3 +1,4 @@
+import { BackupVersao } from "@prisma/client";
 import { prisma } from "./../lib/prisma";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
@@ -13,26 +14,28 @@ export async function getCliente(app: FastifyInstance) {
         }),
         response: {
           200: z.object({
-            cliente: z.object({
-              cliente_id: z.number(),
-              cliente_nome: z.string(),
-              cliente_cnpj_cpf: z.string(),
-              filial: z.number(),
-              cidade: z.string(),
-              codigo_sg: z.number(),
-              razao_social: z.string(),
-              versao_pdvs: z.array(
-                z.object({
-                  pdv_numero: z.number(),
-                  revisao: z.string(),
-                  data_compilacao: z.string(),
-                  versao: z.string(),
-                  sistema_op: z.string(),
-                  ultima_abertura: z.string().nullish(),
-                  ultimo_fechamento: z.string().nullish(),
-                })
-              ),
-            }),
+            cliente: z
+              .object({
+                cliente_id: z.number(),
+                cliente_nome: z.string(),
+                cliente_cnpj_cpf: z.string(),
+                filial: z.number(),
+                cidade: z.string(),
+                codigo_sg: z.number(),
+                razao_social: z.string(),
+                versao_pdvs: z.array(
+                  z.object({
+                    pdv_numero: z.number(),
+                    revisao: z.string(),
+                    data_compilacao: z.string(),
+                    versao: z.string(),
+                    sistema_op: z.string(),
+                    ultima_abertura: z.string().nullish(),
+                    ultimo_fechamento: z.string().nullish(),
+                  })
+                ),
+              })
+              .passthrough(),
           }),
           404: z.object({
             message: z.string(),
@@ -56,6 +59,32 @@ export async function getCliente(app: FastifyInstance) {
           codigo_sg: true,
           razao_social: true,
           VersaoPDV: true,
+          BackupVersao: {
+            select: {
+              bkp_srv_espaco_livre: true,
+              bkp_ultimo_sgerp_cliente: true,
+              bkp_ultimo_sgdfe: true,
+              bkp_local_sgdfe: true,
+              bkp_local_sgerp: true,
+              bkp_ultimo_automatico: true,
+              bkp_tamanho_sgdfe: true,
+              bkp_tamanho_sgerp: true,
+              script_md5: true,
+              script_retorno_update: true,
+              script_ultima_comunicao: true,
+              sgerp_versao_sgerp: true,
+              sgerp_revisao: true,
+              sgerp_compilacao: true,
+              versao_sgdfe: true,
+              cloud: true,
+              cloud_sgdfe: true,
+              cloud_sgerp: true,
+              local_bkp_seguranca: true,
+              tamanho_backup_seguranca_sgdfe: true,
+              tamanho_backup_seguranca_sgerp: true,
+              env_cliente: true,
+            },
+          },
         },
       });
 
@@ -63,6 +92,10 @@ export async function getCliente(app: FastifyInstance) {
         reply.status(404).send({ message: "Cliente não encontrado" });
         return;
       }
+
+      const backupVersao = cliente.BackupVersao
+        ? cliente.BackupVersao[0]
+        : null;
 
       const clienteResponse = {
         cliente: {
@@ -82,6 +115,7 @@ export async function getCliente(app: FastifyInstance) {
             ultima_abertura: versao.ultima_abertura,
             ultimo_fechamento: versao.ultimo_fechamento,
           })),
+          backup_versao: backupVersao,
         },
       };
 

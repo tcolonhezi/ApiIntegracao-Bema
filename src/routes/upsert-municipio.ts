@@ -14,7 +14,6 @@ export async function inserirAlterarMunicipio(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      console.log(request.body);
       const { cidade_nome } = request.body;
       let cidade = await prisma.cidade.findFirst({
         select: {

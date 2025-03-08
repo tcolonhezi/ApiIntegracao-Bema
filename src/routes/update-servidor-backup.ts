@@ -68,7 +68,7 @@ export async function updateBackupServidor(app: FastifyInstance) {
         tamanho_backup_seguranca_sgdfe,
         env_cliente,
       } = request.body;
-      console.log(request.body);
+
       const cliente = await prisma.cliente.findUnique({
         where: {
           cliente_cnpj_cpf: cnpj,

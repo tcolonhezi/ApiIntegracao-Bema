@@ -71,7 +71,6 @@ export async function getClientesPdvsStatus(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      console.log(request.query);
       const { page, pageSize, filtraClientes } = request.query;
 
       // Calcular o offset para paginação

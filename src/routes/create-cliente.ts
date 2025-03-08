@@ -25,7 +25,6 @@ export async function inserirCliente(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      console.log(request.body);
       const cliente_request = request.body;
       const cidade = await prisma.cidade.findFirst({
         where: {

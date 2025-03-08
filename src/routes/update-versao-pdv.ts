@@ -32,7 +32,6 @@ export async function updateVersaoPdv(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      console.log(request.body);
       const pdvs = request.body;
       const updatedPdvs = await Promise.all(
         pdvs.map(

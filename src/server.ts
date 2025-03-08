@@ -42,5 +42,5 @@ app.register(async function (fastify) {
 });
 
 app.listen({ port: 3335, host: "0.0.0.0" }).then(() => {
-  console.log("HTTP server running");
+  console.log("HTTP server running on port " + 3335);
 });
