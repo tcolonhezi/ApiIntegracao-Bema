@@ -54,41 +54,55 @@ export async function updateVersaoPdv(app: FastifyInstance) {
               });
 
               if (!cliente) {
+                console.error("Cliente: " + Cnpj + " não encontrado.");
                 reply.status(404).send({ message: "Cliente não encontrado" });
-                return null;
+                return { message: "Cliente não encontrado " + Cnpj };
               } else {
-                const pdv = await prisma.versaoPDV.upsert({
-                  where: {
-                    pdv_numero_cliente_id: {
-                      pdv_numero: Numero,
-                      cliente_id: cliente.cliente_id,
+                try {
+                  const pdv = await prisma.versaoPDV.upsert({
+                    where: {
+                      pdv_numero_cliente_id: {
+                        pdv_numero: Numero,
+                        cliente_id: cliente.cliente_id,
+                      },
                     },
-                  },
-                  update: {
-                    versao: Versao,
-                    revisao: Revisao,
-                    data_compilacao: Datacomp,
-                    sistema_op: Versaoso,
-                    ultima_abertura: Dataaberto,
-                    ultimo_fechamento: Datafecha,
-                  },
-                  create: {
-                    pdv_numero: Numero,
-                    versao: Versao,
-                    revisao: Revisao,
-                    data_compilacao: Datacomp,
-                    sistema_op: Versaoso,
-                    cliente_id: cliente.cliente_id,
-                    ultima_abertura: Dataaberto,
-                    ultimo_fechamento: Datafecha,
-                  },
-                });
-                return pdv;
+                    update: {
+                      versao: Versao,
+                      revisao: Revisao,
+                      data_compilacao: Datacomp,
+                      sistema_op: Versaoso,
+                      ultima_abertura: Dataaberto,
+                      ultimo_fechamento: Datafecha,
+                    },
+                    create: {
+                      pdv_numero: Numero,
+                      versao: Versao,
+                      revisao: Revisao,
+                      data_compilacao: Datacomp,
+                      sistema_op: Versaoso,
+                      cliente_id: cliente.cliente_id,
+                      ultima_abertura: Dataaberto,
+                      ultimo_fechamento: Datafecha,
+                    },
+                  });
+                  return { pdv };
+                } catch (error) {
+                  console.error(
+                    "Erro ao inserir/atualizar versao PDVs:" + error
+                  );
+                  return {
+                    message: "Erro ao inserir/atualizar versao PDVs:" + error,
+                  };
+                }
               }
             } else {
               console.log(
                 "Ignorando PDV " + Numero + " Inativado em:" + Datainativ
               );
+              return {
+                message:
+                  "Ignorado PDV: " + Numero + " Inativado em: " + Datainativ,
+              };
             }
           }
         )

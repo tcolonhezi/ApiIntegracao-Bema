@@ -1,12 +1,8 @@
 import { z } from "zod";
 import { FastifyInstance } from "fastify";
 import { prisma } from "./../lib/prisma";
-import { verificarVersao } from "../functions/pdvs-utils";
-
+import { verificarVersao } from "../services/validarVersoes";
 // Tipos para garantir a correta tipagem do TypeScript
-type TipoDesatualizacao =
-  | "Desatualizado (Revisão)"
-  | "Versão não encontrada (Atualizar)";
 
 // Schema Zod para o dashboard
 const DashboardSchema = z.object({
@@ -75,7 +71,7 @@ export async function getDashboardPdv(app: FastifyInstance) {
         // Processar cada PDV do cliente
         for (const pdv of pdvs) {
           const statusVersao = verificarVersao(pdv.versao, pdv.revisao);
-
+          console.log(statusVersao);
           if (statusVersao === "Atualizado") {
             atualizados++;
             totalAtualizados++;

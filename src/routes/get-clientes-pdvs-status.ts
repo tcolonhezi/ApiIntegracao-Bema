@@ -2,7 +2,7 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { FastifyInstance } from "fastify";
 import { prisma } from "./../lib/prisma";
-import { verificarVersao } from "../functions/pdvs-utils";
+import { verificarVersao } from "../services/validarVersoes";
 
 // Definição dos schemas Zod
 const PDVDesatualizadoSchema = z.object({
@@ -62,16 +62,18 @@ export async function getClientesPdvsStatus(app: FastifyInstance) {
             page: z.string().optional().default("1"),
             pageSize: z.string().optional().default("10"),
             filtraClientes: z.string().optional(),
+            query: z.string().nullish(),
           })
           .transform((obj) => ({
             page: parseInt(obj.page, 10),
             pageSize: parseInt(obj.pageSize, 10),
             filtraClientes: obj.filtraClientes,
+            query: obj.query,
           })),
       },
     },
     async (request, reply) => {
-      const { page, pageSize, filtraClientes } = request.query;
+      const { page, pageSize, filtraClientes, query } = request.query;
 
       // Calcular o offset para paginação
       const skip = (page - 1) * pageSize;
@@ -80,6 +82,7 @@ export async function getClientesPdvsStatus(app: FastifyInstance) {
         include: {
           VersaoPDV: true,
         },
+        where: query ? { cliente_nome: { contains: query } } : {},
         orderBy: {
           cliente_id: "asc",
         },

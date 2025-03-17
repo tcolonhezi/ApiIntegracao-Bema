@@ -13,6 +13,7 @@ import { getCliente } from "./routes/get-cliente";
 import { getClientesPdvsStatus } from "./routes/get-clientes-pdvs-status";
 import { getDashboardPdv } from "./routes/get-dashboard-pdvs";
 import { updateBackupServidor } from "./routes/update-servidor-backup";
+import { getServidoresBackups } from "./routes/get-servidores-backups";
 
 const app = fastify();
 
@@ -39,6 +40,7 @@ app.register(async function (fastify) {
   fastify.register(getCliente);
   fastify.register(getClientesPdvsStatus);
   fastify.register(getDashboardPdv);
+  fastify.register(getServidoresBackups);
 });
 
 app.listen({ port: 3335, host: "0.0.0.0" }).then(() => {
