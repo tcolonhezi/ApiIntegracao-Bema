@@ -12,7 +12,7 @@ export function parseData(data: string | undefined): {
       const [datePart, timePart] = data.split(",");
       const [day, month, year] = datePart.trim().split("/").map(Number);
       const [hour, minute] = timePart.trim().split(":").map(Number);
-      parsedDate = new Date(year, month - 1, day, hour, minute);
+      parsedDate = new Date(year, month - 1, day, hour - 3, minute);
     } else if (data.includes("-")) {
       // Formato: "2025-03-11"
       const [year, month, day] = data.split("-").map(Number);
@@ -58,10 +58,12 @@ export function parseData(data: string | undefined): {
 
 export function calcularDiferencaDias(dataString: string): number | null {
   const data = parseData(dataString).parsedDate;
+
   if (!data) {
     return null;
   }
   const hoje = new Date();
   const diffMs = hoje.getTime() - data.getTime();
+
   return Math.floor(diffMs / (1000 * 60 * 60 * 24)); // Converte para dias
 }

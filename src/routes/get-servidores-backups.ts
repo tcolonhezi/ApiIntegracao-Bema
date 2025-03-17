@@ -181,7 +181,8 @@ export async function getServidoresBackups(app: FastifyInstance) {
         if (servidor.script_ultima_comunicao) {
           const diff = calcularDiferencaDias(servidor.script_ultima_comunicao);
 
-          if (!diff || diff > diasLimite) {
+          if (diff != null && diff !== 0 && diff > diasLimite) {
+            console.log(diff);
             totalizadores.totaisErrosServidores[
               ServidorTags.ULTIMA_COMUNICACAO_ATRASADA
             ]++;
@@ -191,7 +192,7 @@ export async function getServidoresBackups(app: FastifyInstance) {
 
         if (servidor.bkp_ultimo_sgerp_cliente) {
           const diff = calcularDiferencaDias(servidor.bkp_ultimo_sgerp_cliente);
-          if (!diff || diff > diasLimite) {
+          if (diff != null && diff !== 0 && diff > diasLimite) {
             totalizadores.totaisErrosServidores[
               ServidorTags.BACKUP_SGERP_CLIENTE_ATRASADO
             ]++;
@@ -201,7 +202,7 @@ export async function getServidoresBackups(app: FastifyInstance) {
 
         if (servidor.bkp_ultimo_sgdfe) {
           const diff = calcularDiferencaDias(servidor.bkp_ultimo_sgdfe);
-          if (!diff || diff > diasLimite) {
+          if (diff != null && diff !== 0 && diff > diasLimite) {
             totalizadores.totaisErrosServidores[
               ServidorTags.BACKUP_SGDFE_ATRASADO
             ]++;
@@ -211,7 +212,7 @@ export async function getServidoresBackups(app: FastifyInstance) {
 
         if (servidor.bkp_ultimo_automatico) {
           const diff = calcularDiferencaDias(servidor.bkp_ultimo_automatico);
-          if (!diff || diff > diasLimite) {
+          if (diff != null && diff !== 0 && diff > diasLimite) {
             totalizadores.totaisErrosServidores[
               ServidorTags.BACKUP_SGERP_ATRASADO
             ]++;
@@ -248,25 +249,25 @@ export async function getServidoresBackups(app: FastifyInstance) {
         if (servidor.script_ultima_comunicao) {
           const diff = calcularDiferencaDias(servidor.script_ultima_comunicao);
 
-          if (!diff || diff > diasLimite)
+          if (diff != null && diff !== 0 && diff > diasLimite)
             tags.push(ServidorTags.ULTIMA_COMUNICACAO_ATRASADA);
         }
 
         if (servidor.bkp_ultimo_sgerp_cliente) {
           const diff = calcularDiferencaDias(servidor.bkp_ultimo_sgerp_cliente);
-          if (!diff || diff > diasLimite)
+          if (diff != null && diff !== 0 && diff > diasLimite)
             tags.push(ServidorTags.BACKUP_SGERP_CLIENTE_ATRASADO);
         }
 
         if (servidor.bkp_ultimo_sgdfe) {
           const diff = calcularDiferencaDias(servidor.bkp_ultimo_sgdfe);
-          if (!diff || diff > diasLimite)
+          if (diff != null && diff !== 0 && diff > diasLimite)
             tags.push(ServidorTags.BACKUP_SGDFE_ATRASADO);
         }
 
         if (servidor.bkp_ultimo_automatico) {
           const diff = calcularDiferencaDias(servidor.bkp_ultimo_automatico);
-          if (!diff || diff > diasLimite)
+          if (diff != null && diff !== 0 && diff > diasLimite)
             tags.push(ServidorTags.BACKUP_SGERP_ATRASADO);
         }
 

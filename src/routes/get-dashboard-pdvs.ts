@@ -71,7 +71,7 @@ export async function getDashboardPdv(app: FastifyInstance) {
         // Processar cada PDV do cliente
         for (const pdv of pdvs) {
           const statusVersao = verificarVersao(pdv.versao, pdv.revisao);
-          console.log(statusVersao);
+
           if (statusVersao === "Atualizado") {
             atualizados++;
             totalAtualizados++;
