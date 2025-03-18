@@ -81,6 +81,7 @@ export async function getClientesPdvsStatus(app: FastifyInstance) {
       const clientes = await prisma.cliente.findMany({
         include: {
           VersaoPDV: true,
+          BackupVersao: true,
         },
         where: query ? { cliente_nome: { contains: query } } : {},
         orderBy: {
@@ -127,7 +128,6 @@ export async function getClientesPdvsStatus(app: FastifyInstance) {
               cliente_id: cliente.cliente_id,
               cliente_nome: cliente.cliente_nome,
               filial: cliente.filial,
-              // outros campos do cliente que você queira incluir
             },
             quantidade_pdvs: pdvs.length,
             quantidade_pdvs_atualizados: qtdAtualizados,
