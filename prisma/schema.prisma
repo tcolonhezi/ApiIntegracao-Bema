@@ -44,7 +44,7 @@ model VersaoPDV {
 }
 
 model BackupVersao {
-  bkp_id                         Int      @id @default(autoincrement())
+  bkp_id                         Int     @id @default(autoincrement())
   bkp_srv_espaco_livre           Int?
   bkp_ultimo_sgerp_cliente       String?
   bkp_ultimo_sgdfe               String?
@@ -60,7 +60,7 @@ model BackupVersao {
   sgerp_revisao                  String?
   sgerp_compilacao               String?
   versao_sgdfe                   String?
-  cloud                          Boolean?
+  cloud                          String?
   cloud_sgdfe                    String?
   cloud_sgerp                    String?
   local_bkp_seguranca            String?

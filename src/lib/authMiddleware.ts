@@ -24,12 +24,14 @@ export const createAuthHook = (requiredRole?: Role) => {
       const authHeader = request.headers.authorization;
 
       if (!authHeader) {
+        request.log.warn("Token não fornecido");
         return reply.code(401).send({ error: "Token não fornecido" });
       }
 
       const [scheme, token] = authHeader.split(" ");
 
       if (scheme !== "Bearer") {
+        request.log.warn("Token mal formatado");
         return reply.code(401).send({ error: "Token mal formatado" });
       }
 
@@ -43,21 +45,27 @@ export const createAuthHook = (requiredRole?: Role) => {
       }
 
       if (!userRole) {
+        request.log.warn("Token inválido");
         return reply.code(401).send({ error: "Token inválido" });
       }
 
       // Salva o role no request para uso posterior
       request.userRole = userRole;
 
+      // Log de sucesso na autenticação
+      request.log.info(`Autenticação bem-sucedida para o role: ${userRole}`);
+
       // Se um nível específico é requerido, verifica se o usuário tem acesso
       if (requiredRole) {
         if (requiredRole === "admin" && userRole !== "admin") {
+          request.log.warn("Acesso negado. Requer nível admin.");
           return reply
             .code(403)
             .send({ error: "Acesso negado. Requer nível admin." });
         }
       }
     } catch (error) {
+      request.log.error("Erro na autenticação", error);
       return reply.code(401).send({ error: "Erro na autenticação" });
     }
   };

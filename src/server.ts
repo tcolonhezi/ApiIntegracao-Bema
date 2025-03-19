@@ -15,7 +15,11 @@ import { getDashboardPdv } from "./routes/get-dashboard-pdvs";
 import { updateBackupServidor } from "./routes/update-servidor-backup";
 import { getServidoresBackups } from "./routes/get-servidores-backups";
 
-const app = fastify();
+const app = fastify({
+  logger: {
+    level: "info",
+  },
+});
 
 app.register(fastifyCors, {
   origin: "*",
