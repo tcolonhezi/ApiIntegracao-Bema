@@ -6,6 +6,7 @@ import { string, z } from "zod";
 import { verificarVersao } from "../services/validarVersoes";
 import { calcularDiferencaDias } from "../utils/datas";
 import { ServidorTags } from "../constants/servidorTags";
+import { paginateArray } from "../services/array";
 
 export async function getServidoresBackups(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
@@ -182,7 +183,6 @@ export async function getServidoresBackups(app: FastifyInstance) {
           const diff = calcularDiferencaDias(servidor.script_ultima_comunicao);
 
           if (diff != null && diff !== 0 && diff > diasLimite) {
-            console.log(diff);
             totalizadores.totaisErrosServidores[
               ServidorTags.ULTIMA_COMUNICACAO_ATRASADA
             ]++;
@@ -233,8 +233,15 @@ export async function getServidoresBackups(app: FastifyInstance) {
         };
       });
 
-      let servidoresResponse = servidoresPaginado;
-      let totalServidores = totalServidoresPaginados;
+      //let servidoresResponse = servidoresPaginado;
+      //let totalServidores = totalServidoresPaginados;
+      let servidoresPaginated = paginateArray(
+        todosServidoresTags,
+        pageIndex,
+        10
+      );
+      let servidoresResponse = servidoresPaginated.data;
+      let totalServidores = servidoresPaginated.total;
       if (queryTags) {
         servidoresResponse = todosServidoresTags.filter((servidor) =>
           servidor.tags.includes(queryTags as ServidorTags)
@@ -284,7 +291,7 @@ export async function getServidoresBackups(app: FastifyInstance) {
       });
 
       return reply.send({
-        servidores: servidoresProcessados.map((servidor) => {
+        servidores: servidoresResponse.map((servidor) => {
           return {
             cliente_id: servidor.cliente.cidade_id.toString(),
             cliente_nome: servidor.cliente.cliente_nome,
@@ -318,7 +325,7 @@ export async function getServidoresBackups(app: FastifyInstance) {
             tags: servidor.tags,
           };
         }),
-        totalPagina: totalServidores,
+        totalPagina: servidoresResponse.length,
         totalServidores: servidores.length,
         qtdAtualizados: totalizadores.qtdAtualizados,
         totaisDesatualizados: totalizadores.totaisDesatualizados,
