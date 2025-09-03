@@ -100,18 +100,32 @@ export async function getDashboardPdv(app: FastifyInstance) {
             desatualizadosVersao++;
             totalDesatualizadosVersao++;
           }
-          if (pdv.sistema_op.toLowerCase().includes("CentOS release 6.6")) {
+          if (
+            pdv.sistema_op
+              .toLowerCase()
+              .includes("CentOS release 6.6".toLocaleLowerCase())
+          ) {
             qtd_centos6++;
             total_qtd_centos6++;
           } else if (
-            pdv.sistema_op.toLowerCase().includes("CentOS Linux release 7")
+            pdv.sistema_op
+              .toLowerCase()
+              .includes("CentOS Linux release 7".toLocaleLowerCase())
           ) {
             qtd_centos7++;
             total_qtd_centos7++;
-          } else if (pdv.sistema_op.toLowerCase().includes("Ubuntu 16.04")) {
+          } else if (
+            pdv.sistema_op
+              .toLowerCase()
+              .includes("Ubuntu 16.04".toLocaleLowerCase())
+          ) {
             qtd_ubuntu16++;
             total_qtd_ubuntu16++;
-          } else if (pdv.sistema_op.toLowerCase().includes("Ubuntu 20.04")) {
+          } else if (
+            pdv.sistema_op
+              .toLowerCase()
+              .includes("Ubuntu 20.04".toLocaleLowerCase())
+          ) {
             qtd_ubuntu20++;
             total_qtd_ubuntu20++;
           }
