@@ -100,6 +100,7 @@ export async function getDashboardPdv(app: FastifyInstance) {
             desatualizadosVersao++;
             totalDesatualizadosVersao++;
           }
+          console.log(pdv.sistema_op);
           if (
             pdv.sistema_op
               .toLowerCase()
