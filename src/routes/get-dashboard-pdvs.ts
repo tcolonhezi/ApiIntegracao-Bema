@@ -19,6 +19,12 @@ const DashboardSchema = z.object({
     quantidade: z.number(),
     percentual: z.number(),
   }),
+  distro_linux: z.object({
+    qtd_centos6: z.number(),
+    qtd_centos7: z.number(),
+    qtd_ubuntu16: z.number(),
+    qtd_ubuntu20: z.number(),
+  }),
   por_cliente: z
     .array(
       z.object({
@@ -28,6 +34,10 @@ const DashboardSchema = z.object({
         atualizados: z.number(),
         desatualizados: z.number(),
         percentual_atualizados: z.number(),
+        qtd_centos6: z.number(),
+        qtd_centos7: z.number(),
+        qtd_ubuntu16: z.number(),
+        qtd_ubuntu20: z.number(),
       })
     )
     .optional(),
@@ -60,6 +70,10 @@ export async function getDashboardPdv(app: FastifyInstance) {
       let totalAtualizados = 0;
       let totalDesatualizadosRevisao = 0;
       let totalDesatualizadosVersao = 0;
+      let total_qtd_centos6 = 0;
+      let total_qtd_centos7 = 0;
+      let total_qtd_ubuntu16 = 0;
+      let total_qtd_ubuntu20 = 0;
 
       // Dados por cliente para o dashboard detalhado
       const clientesStats = clientes.map((cliente) => {
@@ -67,6 +81,10 @@ export async function getDashboardPdv(app: FastifyInstance) {
         let atualizados = 0;
         let desatualizadosRevisao = 0;
         let desatualizadosVersao = 0;
+        let qtd_centos6 = 0;
+        let qtd_centos7 = 0;
+        let qtd_ubuntu16 = 0;
+        let qtd_ubuntu20 = 0;
 
         // Processar cada PDV do cliente
         for (const pdv of pdvs) {
@@ -82,6 +100,21 @@ export async function getDashboardPdv(app: FastifyInstance) {
             desatualizadosVersao++;
             totalDesatualizadosVersao++;
           }
+          if (pdv.sistema_op.toLowerCase().includes("CentOS release 6.6")) {
+            qtd_centos6++;
+            total_qtd_centos6++;
+          } else if (
+            pdv.sistema_op.toLowerCase().includes("CentOS Linux release 7")
+          ) {
+            qtd_centos7++;
+            total_qtd_centos7++;
+          } else if (pdv.sistema_op.toLowerCase().includes("Ubuntu 16.04")) {
+            qtd_ubuntu16++;
+            total_qtd_ubuntu16++;
+          } else if (pdv.sistema_op.toLowerCase().includes("Ubuntu 20.04")) {
+            qtd_ubuntu20++;
+            total_qtd_ubuntu20++;
+          }
         }
 
         // Incrementar o contador total
@@ -96,6 +129,10 @@ export async function getDashboardPdv(app: FastifyInstance) {
           desatualizados: desatualizadosRevisao + desatualizadosVersao,
           percentual_atualizados:
             pdvs.length > 0 ? (atualizados / pdvs.length) * 100 : 0,
+          qtd_centos6,
+          qtd_centos7,
+          qtd_ubuntu16,
+          qtd_ubuntu20,
         };
       });
 
@@ -121,6 +158,12 @@ export async function getDashboardPdv(app: FastifyInstance) {
         desatualizados_versao: {
           quantidade: totalDesatualizadosVersao,
           percentual: Number(percentualDesatualizadosVersao.toFixed(1)),
+        },
+        distro_linux: {
+          qtd_centos6: total_qtd_centos6,
+          qtd_centos7: total_qtd_centos7,
+          qtd_ubuntu16: total_qtd_ubuntu16,
+          qtd_ubuntu20: total_qtd_ubuntu20,
         },
       };
 
