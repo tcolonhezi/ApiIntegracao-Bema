@@ -2,6 +2,7 @@
 const versoes = [
   { data: "04/10/2024", revisao: 37419 },
   { data: "24/01/2025", revisao: 37419 },
+  { data: "21/03/2025", revisao: 37419 },
 ];
 
 export function verificarVersao(versao: string, revisao: string) {
