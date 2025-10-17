@@ -101,10 +101,34 @@ export async function getClientesPdvsStatus(app: FastifyInstance) {
           BackupVersao: true,
           cidade: true,
         },
-        where: query ? { cliente_nome: { contains: query } } : {},
-        orderBy: {
-          cliente_id: "asc",
-        },
+        where: query
+          ? {
+              OR: [
+                {
+                  cliente_nome: {
+                    contains: query,
+                  },
+                },
+                {
+                  razao_social: {
+                    contains: query,
+                  },
+                },
+                {
+                  cliente_cnpj_cpf: {
+                    contains: query,
+                  },
+                },
+                {
+                  cidade: {
+                    cidade_nome: {
+                      contains: query,
+                    },
+                  },
+                },
+              ],
+            }
+          : {},
       });
 
       // Processar cada cliente e seus PDVs
