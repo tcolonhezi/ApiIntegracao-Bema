@@ -1,7 +1,15 @@
 // Lista de versões conforme fornecido
-const versoes = [{ data: "16/05/2025", revisao: 46209 }];
 
-export function verificarVersao(versao: string, revisao: string) {
+import { prisma } from "../lib/prisma";
+
+//const versoes = [{ data: "16/05/2025", revisao: 46209 }];
+
+export async function versoes_referencia() {
+  return await prisma.versao_sistema.findMany();
+}
+
+export async function verificarVersao(versao: string, revisao: string) {
+  const versoes = await prisma.versao_sistema.findMany();
   // Convert the input date (YYYY-MM-DD) to DD/MM/YYYY
   let dataFormatada;
   let versaoReplaced = versao.replace(/^[^-]+-/, "");
@@ -14,10 +22,10 @@ export function verificarVersao(versao: string, revisao: string) {
     dataFormatada = `${dia}/${mes}/${ano}`;
   }
 
-  const versaoEncontrada = versoes.find((v) => v.data === dataFormatada);
+  const versaoEncontrada = versoes.find((v) => v.versao_data === dataFormatada);
 
   if (versaoEncontrada) {
-    return Number(revisao) >= versaoEncontrada.revisao
+    return Number(revisao) >= Number.parseInt(versaoEncontrada.versao_revisao)
       ? "Atualizado"
       : "Desatualizado (Revisão)";
   }

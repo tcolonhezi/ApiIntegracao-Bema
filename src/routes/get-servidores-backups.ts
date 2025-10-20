@@ -165,73 +165,79 @@ export async function getServidoresBackups(app: FastifyInstance) {
         totaisErrosServidores: inicializarContadores(ServidorTags),
       };
 
-      const todosServidoresTags = servidores.map((servidor) => {
-        const statusVersao = verificarVersao(
-          servidor.sgerp_versao_sgerp || "",
-          servidor.sgerp_revisao || ""
-        );
+      const todosServidoresTags = await Promise.all(
+        servidores.map(async (servidor) => {
+          const statusVersao = await verificarVersao(
+            servidor.sgerp_versao_sgerp || "",
+            servidor.sgerp_revisao || ""
+          );
 
-        if (statusVersao === "Atualizado") {
-          totalizadores.qtdAtualizados++;
-        } else {
-          totalizadores.totaisDesatualizados[statusVersao]++;
-        }
-
-        const diasLimite = 2;
-        let tags: ServidorTags[] = [];
-        if (servidor.script_ultima_comunicao) {
-          const diff = calcularDiferencaDias(servidor.script_ultima_comunicao);
-
-          if (diff != null && diff !== 0 && diff > diasLimite) {
-            totalizadores.totaisErrosServidores[
-              ServidorTags.ULTIMA_COMUNICACAO_ATRASADA
-            ]++;
-            tags.push(ServidorTags.ULTIMA_COMUNICACAO_ATRASADA);
+          if (statusVersao === "Atualizado") {
+            totalizadores.qtdAtualizados++;
+          } else {
+            totalizadores.totaisDesatualizados[statusVersao]++;
           }
-        }
 
-        if (servidor.bkp_ultimo_sgerp_cliente) {
-          const diff = calcularDiferencaDias(servidor.bkp_ultimo_sgerp_cliente);
-          if (diff != null && diff !== 0 && diff > diasLimite) {
-            totalizadores.totaisErrosServidores[
-              ServidorTags.BACKUP_SGERP_CLIENTE_ATRASADO
-            ]++;
-            tags.push(ServidorTags.BACKUP_SGERP_CLIENTE_ATRASADO);
+          const diasLimite = 2;
+          let tags: ServidorTags[] = [];
+          if (servidor.script_ultima_comunicao) {
+            const diff = calcularDiferencaDias(
+              servidor.script_ultima_comunicao
+            );
+
+            if (diff != null && diff !== 0 && diff > diasLimite) {
+              totalizadores.totaisErrosServidores[
+                ServidorTags.ULTIMA_COMUNICACAO_ATRASADA
+              ]++;
+              tags.push(ServidorTags.ULTIMA_COMUNICACAO_ATRASADA);
+            }
           }
-        }
 
-        if (servidor.bkp_ultimo_sgdfe) {
-          const diff = calcularDiferencaDias(servidor.bkp_ultimo_sgdfe);
-          if (diff != null && diff !== 0 && diff > diasLimite) {
-            totalizadores.totaisErrosServidores[
-              ServidorTags.BACKUP_SGDFE_ATRASADO
-            ]++;
-            tags.push(ServidorTags.BACKUP_SGDFE_ATRASADO);
+          if (servidor.bkp_ultimo_sgerp_cliente) {
+            const diff = calcularDiferencaDias(
+              servidor.bkp_ultimo_sgerp_cliente
+            );
+            if (diff != null && diff !== 0 && diff > diasLimite) {
+              totalizadores.totaisErrosServidores[
+                ServidorTags.BACKUP_SGERP_CLIENTE_ATRASADO
+              ]++;
+              tags.push(ServidorTags.BACKUP_SGERP_CLIENTE_ATRASADO);
+            }
           }
-        }
 
-        if (servidor.bkp_ultimo_automatico) {
-          const diff = calcularDiferencaDias(servidor.bkp_ultimo_automatico);
-          if (diff != null && diff !== 0 && diff > diasLimite) {
-            totalizadores.totaisErrosServidores[
-              ServidorTags.BACKUP_SGERP_ATRASADO
-            ]++;
-            tags.push(ServidorTags.BACKUP_SGERP_ATRASADO);
+          if (servidor.bkp_ultimo_sgdfe) {
+            const diff = calcularDiferencaDias(servidor.bkp_ultimo_sgdfe);
+            if (diff != null && diff !== 0 && diff > diasLimite) {
+              totalizadores.totaisErrosServidores[
+                ServidorTags.BACKUP_SGDFE_ATRASADO
+              ]++;
+              tags.push(ServidorTags.BACKUP_SGDFE_ATRASADO);
+            }
           }
-        }
 
-        if (servidor.bkp_srv_espaco_livre) {
-          if (servidor.bkp_srv_espaco_livre < 100) {
-            totalizadores.totaisErrosServidores[ServidorTags.ESPACO_BAIXO]++;
-            tags.push(ServidorTags.ESPACO_BAIXO);
+          if (servidor.bkp_ultimo_automatico) {
+            const diff = calcularDiferencaDias(servidor.bkp_ultimo_automatico);
+            if (diff != null && diff !== 0 && diff > diasLimite) {
+              totalizadores.totaisErrosServidores[
+                ServidorTags.BACKUP_SGERP_ATRASADO
+              ]++;
+              tags.push(ServidorTags.BACKUP_SGERP_ATRASADO);
+            }
           }
-        }
 
-        return {
-          ...servidor,
-          tags,
-        };
-      });
+          if (servidor.bkp_srv_espaco_livre) {
+            if (servidor.bkp_srv_espaco_livre < 100) {
+              totalizadores.totaisErrosServidores[ServidorTags.ESPACO_BAIXO]++;
+              tags.push(ServidorTags.ESPACO_BAIXO);
+            }
+          }
+
+          return {
+            ...servidor,
+            tags,
+          };
+        })
+      );
 
       //let servidoresResponse = servidoresPaginado;
       //let totalServidores = totalServidoresPaginados;

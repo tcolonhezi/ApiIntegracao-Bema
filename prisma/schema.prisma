@@ -39,6 +39,7 @@ model VersaoPDV {
   ultima_abertura   String?
   ultimo_fechamento String?
   cliente           Cliente @relation(fields: [cliente_id], references: [cliente_id])
+  ativo             Boolean @default(true)
 
   @@id([pdv_numero, cliente_id]) // Define uma chave primária composta
 }
@@ -72,4 +73,10 @@ model BackupVersao {
   cliente    Cliente @relation(fields: [cliente_id], references: [cliente_id])
 
   @@unique([cliente_id, bkp_id])
+}
+
+model versao_sistema {
+  versao_id      Int    @id @default(autoincrement())
+  versao_data    String
+  versao_revisao String
 }

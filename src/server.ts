@@ -14,6 +14,7 @@ import { getClientesPdvsStatus } from "./routes/get-clientes-pdvs-status";
 import { getDashboardPdv } from "./routes/get-dashboard-pdvs";
 import { updateBackupServidor } from "./routes/update-servidor-backup";
 import { getServidoresBackups } from "./routes/get-servidores-backups";
+import { versaoSistemaRoutes } from "./routes/versaoSistemaRoutes";
 
 const app = fastify({
   logger: {
@@ -45,6 +46,7 @@ app.register(async function (fastify) {
   fastify.register(getClientesPdvsStatus);
   fastify.register(getDashboardPdv);
   fastify.register(getServidoresBackups);
+  fastify.register(versaoSistemaRoutes);
 });
 
 app.listen({ port: 3335, host: "0.0.0.0" }).then(() => {

@@ -46,18 +46,18 @@ export async function updateVersaoPdv(app: FastifyInstance) {
             Dataaberto,
             Datafecha,
           }) => {
-            if (Datainativ == "") {
-              const cliente = await prisma.cliente.findUnique({
-                where: {
-                  cliente_cnpj_cpf: Cnpj,
-                },
-              });
+            const cliente = await prisma.cliente.findUnique({
+              where: {
+                cliente_cnpj_cpf: Cnpj,
+              },
+            });
 
-              if (!cliente) {
-                console.error("Cliente: " + Cnpj + " não encontrado.");
-                reply.status(404).send({ message: "Cliente não encontrado" });
-                return { message: "Cliente não encontrado " + Cnpj };
-              } else {
+            if (!cliente) {
+              console.error("Cliente: " + Cnpj + " não encontrado.");
+              reply.status(404).send({ message: "Cliente não encontrado" });
+              return { message: "Cliente não encontrado " + Cnpj };
+            } else {
+              if (Datainativ == "") {
                 try {
                   const pdv = await prisma.versaoPDV.upsert({
                     where: {
@@ -94,15 +94,47 @@ export async function updateVersaoPdv(app: FastifyInstance) {
                     message: "Erro ao inserir/atualizar versao PDVs:" + error,
                   };
                 }
+              } else {
+                const pdv = await prisma.versaoPDV.findUnique({
+                  where: {
+                    pdv_numero_cliente_id: {
+                      pdv_numero: Numero,
+                      cliente_id: cliente.cliente_id,
+                    },
+                  },
+                });
+                if (pdv) {
+                  await prisma.versaoPDV.update({
+                    where: {
+                      pdv_numero_cliente_id: {
+                        pdv_numero: Numero,
+                        cliente_id: cliente.cliente_id,
+                      },
+                    },
+                    data: {
+                      ativo: false,
+                    },
+                  });
+                  return {
+                    message:
+                      "PDV inativado: " +
+                      Numero +
+                      " Inativado em: " +
+                      Datainativ,
+                  };
+                } else {
+                  console.log(
+                    "Ignorando PDV " + Numero + " Inativado em:" + Datainativ
+                  );
+                  return {
+                    message:
+                      "Ignorado PDV: " +
+                      Numero +
+                      " Inativado em: " +
+                      Datainativ,
+                  };
+                }
               }
-            } else {
-              console.log(
-                "Ignorando PDV " + Numero + " Inativado em:" + Datainativ
-              );
-              return {
-                message:
-                  "Ignorado PDV: " + Numero + " Inativado em: " + Datainativ,
-              };
             }
           }
         )
