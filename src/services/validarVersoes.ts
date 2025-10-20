@@ -1,14 +1,22 @@
 // Lista de versões conforme fornecido
 
-import { prisma } from "../lib/prisma";
-
+// Import prisma lazily to avoid possible circular import / initialization issues
+// that can make model accessors undefined at module-evaluation time.
 //const versoes = [{ data: "16/05/2025", revisao: 46209 }];
 
 export async function versoes_referencia() {
+  const { prisma } = await import("../lib/prisma");
+  if (!prisma || !prisma.versao_sistema) {
+    throw new Error("Prisma client or model 'versao_sistema' not available");
+  }
   return await prisma.versao_sistema.findMany();
 }
 
 export async function verificarVersao(versao: string, revisao: string) {
+  const { prisma } = await import("../lib/prisma");
+  if (!prisma || !prisma.versao_sistema) {
+    throw new Error("Prisma client or model 'versao_sistema' not available");
+  }
   const versoes = await prisma.versao_sistema.findMany();
   // Convert the input date (YYYY-MM-DD) to DD/MM/YYYY
   let dataFormatada;

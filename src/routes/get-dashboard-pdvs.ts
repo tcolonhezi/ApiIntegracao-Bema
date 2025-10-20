@@ -76,79 +76,81 @@ export async function getDashboardPdv(app: FastifyInstance) {
       let total_qtd_ubuntu20 = 0;
 
       // Dados por cliente para o dashboard detalhado
-      const clientesStats = clientes.map((cliente) => {
-        const pdvs = cliente.VersaoPDV;
-        let atualizados = 0;
-        let desatualizadosRevisao = 0;
-        let desatualizadosVersao = 0;
-        let qtd_centos6 = 0;
-        let qtd_centos7 = 0;
-        let qtd_ubuntu16 = 0;
-        let qtd_ubuntu20 = 0;
+      const clientesStats = await Promise.all(
+        clientes.map(async (cliente) => {
+          const pdvs = cliente.VersaoPDV;
+          let atualizados = 0;
+          let desatualizadosRevisao = 0;
+          let desatualizadosVersao = 0;
+          let qtd_centos6 = 0;
+          let qtd_centos7 = 0;
+          let qtd_ubuntu16 = 0;
+          let qtd_ubuntu20 = 0;
 
-        // Processar cada PDV do cliente
-        for (const pdv of pdvs) {
-          const statusVersao = verificarVersao(pdv.versao, pdv.revisao);
+          // Processar cada PDV do cliente
+          for (const pdv of pdvs) {
+            const statusVersao = await verificarVersao(pdv.versao, pdv.revisao);
 
-          if (statusVersao === "Atualizado") {
-            atualizados++;
-            totalAtualizados++;
-          } else if (statusVersao === "Desatualizado (Revisão)") {
-            desatualizadosRevisao++;
-            totalDesatualizadosRevisao++;
-          } else {
-            desatualizadosVersao++;
-            totalDesatualizadosVersao++;
+            if (statusVersao === "Atualizado") {
+              atualizados++;
+              totalAtualizados++;
+            } else if (statusVersao === "Desatualizado (Revisão)") {
+              desatualizadosRevisao++;
+              totalDesatualizadosRevisao++;
+            } else {
+              desatualizadosVersao++;
+              totalDesatualizadosVersao++;
+            }
+            if (
+              pdv.sistema_op
+                .toLowerCase()
+                .includes("CentOS release 6.6".toLocaleLowerCase())
+            ) {
+              qtd_centos6++;
+              total_qtd_centos6++;
+            } else if (
+              pdv.sistema_op
+                .toLowerCase()
+                .includes("CentOS Linux release 7".toLocaleLowerCase())
+            ) {
+              qtd_centos7++;
+              total_qtd_centos7++;
+            } else if (
+              pdv.sistema_op
+                .toLowerCase()
+                .includes("Ubuntu 16.04".toLocaleLowerCase())
+            ) {
+              qtd_ubuntu16++;
+              total_qtd_ubuntu16++;
+            } else if (
+              pdv.sistema_op
+                .toLowerCase()
+                .includes("Ubuntu 20.04".toLocaleLowerCase())
+            ) {
+              qtd_ubuntu20++;
+              total_qtd_ubuntu20++;
+            }
           }
-          if (
-            pdv.sistema_op
-              .toLowerCase()
-              .includes("CentOS release 6.6".toLocaleLowerCase())
-          ) {
-            qtd_centos6++;
-            total_qtd_centos6++;
-          } else if (
-            pdv.sistema_op
-              .toLowerCase()
-              .includes("CentOS Linux release 7".toLocaleLowerCase())
-          ) {
-            qtd_centos7++;
-            total_qtd_centos7++;
-          } else if (
-            pdv.sistema_op
-              .toLowerCase()
-              .includes("Ubuntu 16.04".toLocaleLowerCase())
-          ) {
-            qtd_ubuntu16++;
-            total_qtd_ubuntu16++;
-          } else if (
-            pdv.sistema_op
-              .toLowerCase()
-              .includes("Ubuntu 20.04".toLocaleLowerCase())
-          ) {
-            qtd_ubuntu20++;
-            total_qtd_ubuntu20++;
-          }
-        }
 
-        // Incrementar o contador total
-        totalPDVs += pdvs.length;
+          // Incrementar o contador total
+          totalPDVs += pdvs.length;
 
-        // Retornar estatísticas para este cliente
-        return {
-          cliente_id: cliente.cliente_id,
-          nome: cliente.cliente_nome,
-          total_pdvs: pdvs.length,
-          atualizados,
-          desatualizados: desatualizadosRevisao + desatualizadosVersao,
-          percentual_atualizados:
-            pdvs.length > 0 ? (atualizados / pdvs.length) * 100 : 0,
-          qtd_centos6,
-          qtd_centos7,
-          qtd_ubuntu16,
-          qtd_ubuntu20,
-        };
-      });
+          // Retornar estatísticas para este cliente
+          return {
+            cliente_id: cliente.cliente_id,
+            nome: cliente.cliente_nome,
+            total_pdvs: pdvs.length,
+            atualizados,
+            desatualizados: desatualizadosRevisao + desatualizadosVersao,
+            percentual_atualizados:
+              pdvs.length > 0 ? (atualizados / pdvs.length) * 100 : 0,
+            qtd_centos6,
+            qtd_centos7,
+            qtd_ubuntu16,
+            qtd_ubuntu20,
+          };
+        })
+      );
 
       // Calcular percentuais
       const percentualAtualizados =
