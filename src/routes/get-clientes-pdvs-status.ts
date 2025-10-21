@@ -137,7 +137,7 @@ export async function getClientesPdvsStatus(app: FastifyInstance) {
       // Processar cada cliente e seus PDVs
       const clientesProcessados = await Promise.all(
         clientes.map(async (cliente) => {
-          const pdvs = cliente.VersaoPDV;
+          const pdvs = cliente.VersaoPDV.filter((pdv) => pdv.ativo);
           const pdvsDesatualizados: PDVDesatualizado[] = [];
           let qtdAtualizados = 0;
           let total_qtd_centos6 = 0;

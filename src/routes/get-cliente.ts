@@ -114,7 +114,10 @@ export async function getCliente(app: FastifyInstance) {
             sistema_op: versao.sistema_op,
             ultima_abertura: versao.ultima_abertura,
             ultimo_fechamento: versao.ultimo_fechamento,
-          })),
+            ativo: versao.ativo,
+          }))
+            .filter((pdv) => pdv.ativo)
+            .sort((a, b) => a.pdv_numero - b.pdv_numero),
           backup_versao: backupVersao,
         },
       };
