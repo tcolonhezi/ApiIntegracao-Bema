@@ -136,106 +136,106 @@ export async function getClientesPdvsStatus(app: FastifyInstance) {
 
       // Processar cada cliente e seus PDVs
       const clientesProcessados = await Promise.all(
-        clientes
-          .map(async (cliente) => {
-            const pdvs = cliente.VersaoPDV;
-            const pdvsDesatualizados: PDVDesatualizado[] = [];
-            let qtdAtualizados = 0;
-            let total_qtd_centos6 = 0;
-            let total_qtd_centos7 = 0;
-            let total_qtd_ubuntu16 = 0;
-            let total_qtd_ubuntu20 = 0;
+        clientes.map(async (cliente) => {
+          const pdvs = cliente.VersaoPDV;
+          const pdvsDesatualizados: PDVDesatualizado[] = [];
+          let qtdAtualizados = 0;
+          let total_qtd_centos6 = 0;
+          let total_qtd_centos7 = 0;
+          let total_qtd_ubuntu16 = 0;
+          let total_qtd_ubuntu20 = 0;
 
-            const tiposDesatualizacao = {
-              "Desatualizado (Revisão)": 0,
-              "Versão não encontrada (Atualizar)": 0,
-            };
+          const tiposDesatualizacao = {
+            "Desatualizado (Revisão)": 0,
+            "Versão não encontrada (Atualizar)": 0,
+          };
 
-            for (const pdv of pdvs) {
-              const statusVersao = await verificarVersao(
-                pdv.versao,
-                pdv.revisao
-              );
+          for (const pdv of pdvs) {
+            const statusVersao = await verificarVersao(pdv.versao, pdv.revisao);
 
-              if (statusVersao === "Atualizado") {
-                qtdAtualizados++;
-              } else {
-                pdvsDesatualizados.push({
-                  pdv_numero: pdv.pdv_numero,
-                  versao: pdv.versao,
-                  revisao: pdv.revisao,
-                  tipo_desatualizacao: statusVersao,
-                });
+            if (statusVersao === "Atualizado") {
+              qtdAtualizados++;
+            } else {
+              pdvsDesatualizados.push({
+                pdv_numero: pdv.pdv_numero,
+                versao: pdv.versao,
+                revisao: pdv.revisao,
+                tipo_desatualizacao: statusVersao,
+              });
 
-                tiposDesatualizacao[statusVersao]++;
-              }
-
-              if (
-                pdv.sistema_op
-                  .toLowerCase()
-                  .includes("CentOS release 6.6".toLocaleLowerCase())
-              ) {
-                total_qtd_centos6++;
-              } else if (
-                pdv.sistema_op
-                  .toLowerCase()
-                  .includes("CentOS Linux release 7".toLocaleLowerCase())
-              ) {
-                total_qtd_centos7++;
-              } else if (
-                pdv.sistema_op
-                  .toLowerCase()
-                  .includes("Ubuntu 16.04".toLocaleLowerCase())
-              ) {
-                total_qtd_ubuntu16++;
-              } else if (
-                pdv.sistema_op
-                  .toLowerCase()
-                  .includes("Ubuntu 20.04".toLocaleLowerCase())
-              ) {
-                total_qtd_ubuntu20++;
-              }
+              tiposDesatualizacao[statusVersao]++;
             }
 
-            // Montar o objeto para cada cliente
-            // caso estiver com filtraCliente preenchido, filtra os clientes que
-            // possuem pdv desatualizado
-            if (filtraClientes === "sim" && pdvsDesatualizados.length === 0) {
-              return;
+            if (
+              pdv.sistema_op
+                .toLowerCase()
+                .includes("CentOS release 6.6".toLocaleLowerCase())
+            ) {
+              total_qtd_centos6++;
+            } else if (
+              pdv.sistema_op
+                .toLowerCase()
+                .includes("CentOS Linux release 7".toLocaleLowerCase())
+            ) {
+              total_qtd_centos7++;
+            } else if (
+              pdv.sistema_op
+                .toLowerCase()
+                .includes("Ubuntu 16.04".toLocaleLowerCase())
+            ) {
+              total_qtd_ubuntu16++;
+            } else if (
+              pdv.sistema_op
+                .toLowerCase()
+                .includes("Ubuntu 20.04".toLocaleLowerCase())
+            ) {
+              total_qtd_ubuntu20++;
             }
-            const clienteProcessado = {
-              cliente: {
-                cliente_id: cliente.cliente_id,
-                cliente_nome: cliente.cliente_nome,
-                filial: cliente.filial,
-                cidade: cliente.cidade.cidade_nome,
-              },
-              quantidade_pdvs: pdvs.length,
-              quantidade_pdvs_atualizados: qtdAtualizados,
-              quantidade_pdvs_desatualizados: pdvsDesatualizados.length,
-              pdvs_desatualizados: pdvsDesatualizados,
-              tipos_desatualizacao: tiposDesatualizacao,
-              distro_linux: {
-                qtd_centos6: total_qtd_centos6,
-                qtd_centos7: total_qtd_centos7,
-                qtd_ubuntu16: total_qtd_ubuntu16,
-                qtd_ubuntu20: total_qtd_ubuntu20,
-              },
-            };
+          }
 
-            return aplicarFiltros(
-              clienteProcessado,
-              filtraClientes,
-              request.query.filtraDistro
-            )
-              ? clienteProcessado
-              : undefined;
-          })
-          .filter((item) => item !== undefined)
+          // Montar o objeto para cada cliente
+          // caso estiver com filtraCliente preenchido, filtra os clientes que
+          // possuem pdv desatualizado
+          if (filtraClientes === "sim" && pdvsDesatualizados.length === 0) {
+            return;
+          }
+          const clienteProcessado = {
+            cliente: {
+              cliente_id: cliente.cliente_id,
+              cliente_nome: cliente.cliente_nome,
+              filial: cliente.filial,
+              cidade: cliente.cidade.cidade_nome,
+            },
+            quantidade_pdvs: pdvs.length,
+            quantidade_pdvs_atualizados: qtdAtualizados,
+            quantidade_pdvs_desatualizados: pdvsDesatualizados.length,
+            pdvs_desatualizados: pdvsDesatualizados,
+            tipos_desatualizacao: tiposDesatualizacao,
+            distro_linux: {
+              qtd_centos6: total_qtd_centos6,
+              qtd_centos7: total_qtd_centos7,
+              qtd_ubuntu16: total_qtd_ubuntu16,
+              qtd_ubuntu20: total_qtd_ubuntu20,
+            },
+          };
+
+          return aplicarFiltros(
+            clienteProcessado,
+            filtraClientes,
+            request.query.filtraDistro
+          )
+            ? clienteProcessado
+            : undefined;
+        })
+      );
+
+      // remover itens undefined retornados pelo map async
+      const clientesProcessadosNonNull = clientesProcessados.filter(
+        (item) => item !== undefined
       );
 
       // Aplicar filtros adicionais
-      const clientesFiltrados = clientesProcessados.filter((cliente) =>
+      const clientesFiltrados = clientesProcessadosNonNull.filter((cliente) =>
         aplicarFiltros(cliente, filtraClientes, request.query.filtraDistro)
       );
 
@@ -281,7 +281,14 @@ const aplicarFiltros = (
 
   // Filtro por distribuição
   if (filtraDistro) {
-    const { distro_linux } = cliente;
+    // defensive: cliente might be undefined or not have distro_linux
+    if (!cliente) return false;
+    const distro_linux = cliente.distro_linux ?? {
+      qtd_centos6: 0,
+      qtd_centos7: 0,
+      qtd_ubuntu16: 0,
+      qtd_ubuntu20: 0,
+    };
 
     // Add debug logging
     console.log("Applying distro filters:", {
