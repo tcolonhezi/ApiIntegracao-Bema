@@ -16,6 +16,7 @@ export async function getServidoresBackups(app: FastifyInstance) {
         querystring: z.object({
           query: z.string().nullish(),
           pageIndex: z.string().nullish().default("0").transform(Number),
+          // queryTags can be a single tag, comma separated tags or a JSON array string
           queryTags: z.string().nullish(),
         }),
         response: {
@@ -55,6 +56,7 @@ export async function getServidoresBackups(app: FastifyInstance) {
             ),
             totalPagina: z.number(),
             totalServidores: z.number(),
+            totalServidoresFiltrados: z.number(),
             qtdAtualizados: z.number(),
             totaisDesatualizados: z.object({
               [TipoDesatualizacao.DESATUALIZADO_REVISAO]: z.number(),
@@ -74,82 +76,53 @@ export async function getServidoresBackups(app: FastifyInstance) {
     async (request, reply) => {
       const { query, pageIndex, queryTags } = request.query;
 
-      const [servidoresPaginado, totalServidoresPaginados, servidores] =
-        await Promise.all([
-          prisma.backupVersao.findMany({
-            include: {
-              cliente: true,
-            },
-            where: query
-              ? {
-                  OR: [
-                    {
-                      cliente: {
-                        cliente_nome: {
-                          contains: query,
-                        },
-                      },
-                    },
-                    {
-                      cliente: {
-                        razao_social: {
-                          contains: query,
-                        },
-                      },
-                    },
-                    {
-                      cliente: {
-                        cliente_cnpj_cpf: {
-                          contains: query,
-                        },
-                      },
-                    },
-                  ],
-                }
-              : {},
-            take: 10,
-            skip: pageIndex * 10,
-            orderBy: {
-              cliente: {
-                cliente_nome: "asc",
-              },
-            },
-          }),
-          prisma.backupVersao.count({
-            where: query
-              ? {
-                  OR: [
-                    {
-                      cliente: {
-                        cliente_nome: {
-                          contains: query,
-                        },
-                      },
-                    },
-                    {
-                      cliente: {
-                        razao_social: {
-                          contains: query,
-                        },
-                      },
-                    },
-                    {
-                      cliente: {
-                        cliente_cnpj_cpf: {
-                          contains: query,
-                        },
-                      },
-                    },
-                  ],
-                }
-              : {},
-          }),
-          prisma.backupVersao.findMany({
-            include: {
-              cliente: true,
-            },
-          }),
-        ]);
+      // Parse queryTags: accept comma-separated, JSON array string, or single value
+      const parseQueryTags = (qt?: string | null) => {
+        if (!qt) return [] as string[];
+        try {
+          const trimmed = qt.trim();
+          if (
+            (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+            trimmed.includes("\\")
+          ) {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) return parsed.map(String);
+          }
+        } catch (e) {
+          // ignore json parse errors
+        }
+        return qt
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
+      };
+
+      const requestedTags = parseQueryTags(queryTags);
+
+      // Build base where clause for query text (searches cliente_nome, razao_social, cliente_cnpj_cpf and cidade_nome)
+      const baseWhere = query
+        ? {
+            OR: [
+              { cliente: { cliente_nome: { contains: query } } },
+              { cliente: { razao_social: { contains: query } } },
+              { cliente: { cliente_cnpj_cpf: { contains: query } } },
+              { cliente: { cidade: { cidade_nome: { contains: query } } } },
+            ],
+          }
+        : {};
+
+      const getServidores = prisma.backupVersao.findMany({
+        include: { cliente: { include: { cidade: true } } },
+        where: baseWhere,
+        orderBy: { cliente: { cliente_nome: "asc" } },
+      });
+
+      const countTotal = prisma.backupVersao.count(); // SEM 'where'
+
+      const [servidores, totalServidores] = await Promise.all([
+        getServidores,
+        countTotal,
+      ]);
 
       const inicializarContadores = <T extends { [key: string]: string }>(
         enumObj: T
@@ -165,7 +138,11 @@ export async function getServidoresBackups(app: FastifyInstance) {
         totaisErrosServidores: inicializarContadores(ServidorTags),
       };
 
-      const todosServidoresTags = await Promise.all(
+      // Compute tags and totals in a single pass
+      const todosServidoresTags = [] as Array<
+        (typeof servidores)[number] & { tags: ServidorTags[] }
+      >;
+      await Promise.all(
         servidores.map(async (servidor) => {
           const statusVersao = await verificarVersao(
             servidor.sgerp_versao_sgerp || "",
@@ -175,16 +152,26 @@ export async function getServidoresBackups(app: FastifyInstance) {
           if (statusVersao === "Atualizado") {
             totalizadores.qtdAtualizados++;
           } else {
-            totalizadores.totaisDesatualizados[statusVersao]++;
+            // keep legacy labels used in frontend if different
+            const key =
+              statusVersao as unknown as keyof typeof totalizadores.totaisDesatualizados;
+            if (key in totalizadores.totaisDesatualizados) {
+              (totalizadores.totaisDesatualizados as any)[key]++;
+            } else {
+              // If it's a different string, try to count under 'DESATUALIZADO_REVISAO' as fallback
+              (totalizadores.totaisDesatualizados as any)[
+                TipoDesatualizacao.DESATUALIZADO_REVISAO
+              ]++;
+            }
           }
 
           const diasLimite = 2;
-          let tags: ServidorTags[] = [];
+          const tags: ServidorTags[] = [];
+
           if (servidor.script_ultima_comunicao) {
             const diff = calcularDiferencaDias(
               servidor.script_ultima_comunicao
             );
-
             if (diff != null && diff !== 0 && diff > diasLimite) {
               totalizadores.totaisErrosServidores[
                 ServidorTags.ULTIMA_COMUNICACAO_ATRASADA
@@ -225,76 +212,30 @@ export async function getServidoresBackups(app: FastifyInstance) {
             }
           }
 
-          if (servidor.bkp_srv_espaco_livre) {
+          if (servidor.bkp_srv_espaco_livre != null) {
             if (servidor.bkp_srv_espaco_livre < 100) {
               totalizadores.totaisErrosServidores[ServidorTags.ESPACO_BAIXO]++;
               tags.push(ServidorTags.ESPACO_BAIXO);
             }
           }
 
-          return {
-            ...servidor,
-            tags,
-          };
+          todosServidoresTags.push({ ...servidor, tags });
         })
       );
 
-      //let servidoresResponse = servidoresPaginado;
-      //let totalServidores = totalServidoresPaginados;
-      let servidoresPaginated = paginateArray(
-        todosServidoresTags,
-        pageIndex,
-        10
-      );
-      let servidoresResponse = servidoresPaginated.data;
-      let totalServidores = servidoresPaginated.total;
-      if (queryTags) {
-        servidoresResponse = todosServidoresTags.filter((servidor) =>
-          servidor.tags.includes(queryTags as ServidorTags)
+      // Apply tag filtering if requested
+      let filtrados = todosServidoresTags;
+      if (requestedTags.length) {
+        // Only keep servers that include all requested tags
+        filtrados = todosServidoresTags.filter((s) =>
+          requestedTags.every((t) => s.tags.includes(t as ServidorTags))
         );
-        totalServidores = servidoresResponse.length;
       }
 
-      const servidoresProcessados = servidoresResponse.map((servidor) => {
-        let tags: ServidorTags[] = [];
-        const diasLimite = 2;
-
-        if (servidor.script_ultima_comunicao) {
-          const diff = calcularDiferencaDias(servidor.script_ultima_comunicao);
-
-          if (diff != null && diff !== 0 && diff > diasLimite)
-            tags.push(ServidorTags.ULTIMA_COMUNICACAO_ATRASADA);
-        }
-
-        if (servidor.bkp_ultimo_sgerp_cliente) {
-          const diff = calcularDiferencaDias(servidor.bkp_ultimo_sgerp_cliente);
-          if (diff != null && diff !== 0 && diff > diasLimite)
-            tags.push(ServidorTags.BACKUP_SGERP_CLIENTE_ATRASADO);
-        }
-
-        if (servidor.bkp_ultimo_sgdfe) {
-          const diff = calcularDiferencaDias(servidor.bkp_ultimo_sgdfe);
-          if (diff != null && diff !== 0 && diff > diasLimite)
-            tags.push(ServidorTags.BACKUP_SGDFE_ATRASADO);
-        }
-
-        if (servidor.bkp_ultimo_automatico) {
-          const diff = calcularDiferencaDias(servidor.bkp_ultimo_automatico);
-          if (diff != null && diff !== 0 && diff > diasLimite)
-            tags.push(ServidorTags.BACKUP_SGERP_ATRASADO);
-        }
-
-        if (servidor.bkp_srv_espaco_livre) {
-          if (servidor.bkp_srv_espaco_livre < 100) {
-            tags.push(ServidorTags.ESPACO_BAIXO);
-          }
-        }
-
-        return {
-          ...servidor,
-          tags,
-        };
-      });
+      // Paginate after filtering
+      const servidoresPaginated = paginateArray(filtrados, pageIndex, 10);
+      const servidoresResponse = servidoresPaginated.data;
+      const totalServidoresFiltrados = filtrados.length;
 
       return reply.send({
         servidores: servidoresResponse.map((servidor) => {
@@ -332,7 +273,8 @@ export async function getServidoresBackups(app: FastifyInstance) {
           };
         }),
         totalPagina: servidoresResponse.length,
-        totalServidores: servidores.length,
+        totalServidores: totalServidores,
+        totalServidoresFiltrados: totalServidoresFiltrados,
         qtdAtualizados: totalizadores.qtdAtualizados,
         totaisDesatualizados: totalizadores.totaisDesatualizados,
         totaisErrosServidores: totalizadores.totaisErrosServidores,
