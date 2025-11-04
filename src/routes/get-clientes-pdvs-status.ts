@@ -169,7 +169,7 @@ export async function getClientesPdvsStatus(app: FastifyInstance) {
             if (
               pdv.sistema_op
                 .toLowerCase()
-                .includes("CentOS release 6.6".toLocaleLowerCase())
+                .includes("CentOS release 6".toLocaleLowerCase())
             ) {
               total_qtd_centos6++;
             } else if (
