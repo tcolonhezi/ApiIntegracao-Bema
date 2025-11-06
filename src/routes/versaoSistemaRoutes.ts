@@ -25,6 +25,9 @@ export async function versaoSistemaRoutes(app: FastifyInstance) {
         },
         where: {
           versao_data: versao_data,
+          AND: {
+            versao_revisao: versao_revisao,
+          },
         },
       });
       if (!versao) {
