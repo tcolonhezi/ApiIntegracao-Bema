@@ -240,7 +240,7 @@ export async function getServidoresBackups(app: FastifyInstance) {
       return reply.send({
         servidores: servidoresResponse.map((servidor) => {
           return {
-            cliente_id: servidor.cliente.cidade_id.toString(),
+            cliente_id: servidor.cliente.cliente_id.toString(),
             cliente_nome: servidor.cliente.cliente_nome,
             cliente_razao_social: servidor.cliente.razao_social,
             cliente_cnpj_cpf: servidor.cliente.cliente_cnpj_cpf,
