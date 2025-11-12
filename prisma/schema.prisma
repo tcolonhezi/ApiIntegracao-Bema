@@ -17,16 +17,24 @@ model Cidade {
 }
 
 model Cliente {
-  cliente_id       Int            @id @default(autoincrement())
-  cliente_nome     String
-  cliente_cnpj_cpf String         @unique
-  filial           Int            @default(1)
-  cidade_id        Int
-  codigo_sg        Int
-  razao_social     String
-  cidade           Cidade         @relation(fields: [cidade_id], references: [cidade_id])
-  VersaoPDV        VersaoPDV[]
-  BackupVersao     BackupVersao[]
+  cliente_id        Int       @id @default(autoincrement())
+  cliente_nome      String
+  cliente_cnpj_cpf  String    @unique
+  filial            Int       @default(1)
+  cidade_id         Int
+  codigo_sg         Int
+  razao_social      String
+  cidade            Cidade    @relation(fields: [cidade_id], references: [cidade_id])
+  // Relação para suportar filiais que também são clientes cadastrados.
+  // Um cliente pode ter um parent (matriz) e várias filiais (clientes-filho).
+  parent_cliente_id Int?
+  parent            Cliente?  @relation("ClienteFiliais", fields: [parent_cliente_id], references: [cliente_id])
+  filiais           Cliente[] @relation("ClienteFiliais")
+
+  VersaoPDV    VersaoPDV[]
+  BackupVersao BackupVersao[]
+
+  @@index([parent_cliente_id])
 }
 
 model VersaoPDV {

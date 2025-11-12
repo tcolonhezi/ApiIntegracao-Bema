@@ -291,10 +291,10 @@ const aplicarFiltros = (
     };
 
     // Add debug logging
-    console.log("Applying distro filters:", {
-      filtraDistro,
-      clienteDistro: distro_linux,
-    });
+    // console.log("Applying distro filters:", {
+    //   filtraDistro,
+    //   clienteDistro: distro_linux,
+    // });
 
     const hasActiveFilter = Object.values(filtraDistro).some(
       (value) => value === true

@@ -3,7 +3,10 @@ import { prisma } from "./../lib/prisma";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { string, z } from "zod";
-import { verificarVersao } from "../services/validarVersoes";
+import {
+  verificarVersao,
+  versaoSGDFEEstaDesatualizada,
+} from "../services/validarVersoes";
 import { calcularDiferencaDias } from "../utils/datas";
 import { ServidorTags } from "../constants/servidorTags";
 import { paginateArray } from "../services/array";
@@ -49,8 +52,27 @@ export async function getServidoresBackups(app: FastifyInstance) {
                 tamanho_backup_seguranca_sgerp: z.string(),
                 tamanho_backup_seguranca_sgdfe: z.string(),
                 env_cliente: z.string(),
+                filiais: z.array(
+                  z.object({
+                    filial_id: z.string(),
+                    filial_numero: z.number(),
+                    total: z.number(),
+                    atualizados: z.number(),
+                    desatualizados: z.number(),
+                  })
+                ),
+                pdv_servidor: z.object({
+                  total: z.number(),
+                  atualizados: z.number(),
+                  desatualizados: z.number(),
+                }),
                 tags: z.array(
                   z.enum(Object.values(ServidorTags) as [string, ...string[]])
+                ),
+                tagsAtualizacao: z.array(
+                  z.enum(
+                    Object.values(TipoDesatualizacao) as [string, ...string[]]
+                  )
                 ),
               })
             ),
@@ -61,6 +83,9 @@ export async function getServidoresBackups(app: FastifyInstance) {
             totaisDesatualizados: z.object({
               [TipoDesatualizacao.DESATUALIZADO_REVISAO]: z.number(),
               [TipoDesatualizacao.DESATUALIZADO_VERSAO]: z.number(),
+              [TipoDesatualizacao.DESATUALIZADO_SGDFE]: z.number(),
+              [TipoDesatualizacao.ATUALIZADO]: z.number(),
+              [TipoDesatualizacao.ATUALIZADO_SGDFE]: z.number(),
             }),
             totaisErrosServidores: z.object({
               [ServidorTags.BACKUP_SGDFE_ATRASADO]: z.number(),
@@ -112,7 +137,15 @@ export async function getServidoresBackups(app: FastifyInstance) {
         : {};
 
       const getServidores = prisma.backupVersao.findMany({
-        include: { cliente: { include: { cidade: true } } },
+        include: {
+          cliente: {
+            include: {
+              cidade: true,
+              VersaoPDV: true,
+              filiais: { include: { VersaoPDV: true } },
+            },
+          },
+        },
         where: baseWhere,
         orderBy: { cliente: { cliente_nome: "asc" } },
       });
@@ -139,31 +172,104 @@ export async function getServidoresBackups(app: FastifyInstance) {
       };
 
       // Compute tags and totals in a single pass
-      const todosServidoresTags = [] as Array<
-        (typeof servidores)[number] & { tags: ServidorTags[] }
-      >;
-      await Promise.all(
+      const todosServidoresTags = await Promise.all(
         servidores.map(async (servidor) => {
           const statusVersao = await verificarVersao(
             servidor.sgerp_versao_sgerp || "",
             servidor.sgerp_revisao || ""
           );
 
+          const statusVersaoSGDFE = versaoSGDFEEstaDesatualizada(
+            servidor.versao_sgdfe?.split("-")[0] || "0.0.0",
+            "2.13.1"
+          );
+
+          const tagsAtualizacao: TipoDesatualizacao[] = [];
+
           if (statusVersao === "Atualizado") {
+            tagsAtualizacao.push(TipoDesatualizacao.ATUALIZADO);
             totalizadores.qtdAtualizados++;
           } else {
             // keep legacy labels used in frontend if different
             const key =
               statusVersao as unknown as keyof typeof totalizadores.totaisDesatualizados;
             if (key in totalizadores.totaisDesatualizados) {
+              tagsAtualizacao.push(TipoDesatualizacao.DESATUALIZADO_VERSAO);
               (totalizadores.totaisDesatualizados as any)[key]++;
             } else {
               // If it's a different string, try to count under 'DESATUALIZADO_REVISAO' as fallback
+              tagsAtualizacao.push(TipoDesatualizacao.DESATUALIZADO_REVISAO);
               (totalizadores.totaisDesatualizados as any)[
                 TipoDesatualizacao.DESATUALIZADO_REVISAO
               ]++;
             }
           }
+
+          if (statusVersaoSGDFE) {
+            totalizadores.totaisDesatualizados["Versão SGDFE desatualizada"]++;
+            tagsAtualizacao.push(TipoDesatualizacao.DESATUALIZADO_SGDFE);
+          } else {
+            totalizadores.totaisDesatualizados["Versão SGDFE atualizada"]++;
+            tagsAtualizacao.push(TipoDesatualizacao.ATUALIZADO_SGDFE);
+          }
+
+          // --- Novo: calcular resumo por filial (total / atualizados / desatualizados)
+          // As filiais vêm com VersaoPDV aninhado. Para cada PDV usamos a mesma
+          // função `verificarVersao` já disponível para determinar se está
+          // atualizado. Mantemos a verificação simples e assincrona.
+          const filiaisResumo = await Promise.all(
+            (servidor.cliente.filiais || []).map(async (filial) => {
+              const pdvs = (filial.VersaoPDV || []).filter(
+                (p: any) => p && (p.ativo === undefined || p.ativo === true)
+              );
+
+              let atualizadosCount = 0;
+              for (const pdv of pdvs) {
+                try {
+                  const statusPdv = await verificarVersao(
+                    pdv.versao || "",
+                    pdv.revisao || ""
+                  );
+                  if (statusPdv === "Atualizado") atualizadosCount++;
+                } catch (e) {
+                  // Se ocorrer erro na verificação de versão de um PDV,
+                  // consideramos como desatualizado (defensivo) e seguimos.
+                }
+              }
+
+              return {
+                filial_id: String(filial.cliente_id || ""),
+                filial_numero: filial.filial,
+                total: pdvs.length,
+                atualizados: atualizadosCount,
+                desatualizados: pdvs.length - atualizadosCount,
+              };
+            })
+          );
+
+          // --- Novo: calcular resumo dos PDVs do próprio cliente/servidor
+          const servidorPdvs = (servidor.cliente.VersaoPDV || []).filter(
+            (p: any) => p && (p.ativo === undefined || p.ativo === true)
+          );
+
+          let servidorAtualizados = 0;
+          for (const pdv of servidorPdvs) {
+            try {
+              const statusPdv = await verificarVersao(
+                pdv.versao || "",
+                pdv.revisao || ""
+              );
+              if (statusPdv === "Atualizado") servidorAtualizados++;
+            } catch (e) {
+              // em caso de erro na verificação, consideramos desatualizado (defensivo)
+            }
+          }
+
+          const pdvResumo = {
+            total: servidorPdvs.length,
+            atualizados: servidorAtualizados,
+            desatualizados: servidorPdvs.length - servidorAtualizados,
+          };
 
           const diasLimite = 2;
           const tags: ServidorTags[] = [];
@@ -219,21 +325,36 @@ export async function getServidoresBackups(app: FastifyInstance) {
             }
           }
 
-          todosServidoresTags.push({ ...servidor, tags });
+          // Retorna o servidor processado. Usar Promise.all sobre o map
+          // garante que a ordem do array resultante corresponda à ordem
+          // dos servidores retornados pelo banco de dados.
+          return {
+            ...servidor,
+            tags,
+            tagsAtualizacao,
+            filiaisResumo,
+            pdv_servidor: pdvResumo,
+          };
         })
       );
 
-      // Apply tag filtering if requested
+      // Apply tag filtering if requested: match requested tags against both
+      // normal server tags (`tags`) and update/version tags (`tagsAtualizacao`).
+      // Keep servers that include ALL requested tags in at least one of the two arrays.
       let filtrados = todosServidoresTags;
       if (requestedTags.length) {
-        // Only keep servers that include all requested tags
         filtrados = todosServidoresTags.filter((s) =>
-          requestedTags.every((t) => s.tags.includes(t as ServidorTags))
+          requestedTags.every(
+            (t) =>
+              (s.tags && s.tags.includes(t as ServidorTags)) ||
+              (s.tagsAtualizacao &&
+                s.tagsAtualizacao.includes(t as unknown as TipoDesatualizacao))
+          )
         );
       }
 
       // Paginate after filtering
-      const servidoresPaginated = paginateArray(filtrados, pageIndex, 10);
+      const servidoresPaginated = paginateArray(filtrados, pageIndex, 100);
       const servidoresResponse = servidoresPaginated.data;
       const totalServidoresFiltrados = filtrados.length;
 
@@ -269,7 +390,10 @@ export async function getServidoresBackups(app: FastifyInstance) {
             tamanho_backup_seguranca_sgdfe:
               servidor.tamanho_backup_seguranca_sgdfe || "",
             env_cliente: servidor.env_cliente || "",
+            filiais: servidor.filiaisResumo || [],
+            pdv_servidor: servidor.pdv_servidor || "",
             tags: servidor.tags,
+            tagsAtualizacao: servidor.tagsAtualizacao,
           };
         }),
         totalPagina: servidoresResponse.length,
