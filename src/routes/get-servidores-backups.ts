@@ -190,18 +190,15 @@ export async function getServidoresBackups(app: FastifyInstance) {
             tagsAtualizacao.push(TipoDesatualizacao.ATUALIZADO);
             totalizadores.qtdAtualizados++;
           } else {
-            // keep legacy labels used in frontend if different
-            const key =
-              statusVersao as unknown as keyof typeof totalizadores.totaisDesatualizados;
-            if (key in totalizadores.totaisDesatualizados) {
+            if (statusVersao === "Versão não encontrada (Atualizar)") {
               tagsAtualizacao.push(TipoDesatualizacao.DESATUALIZADO_VERSAO);
-              (totalizadores.totaisDesatualizados as any)[key]++;
+              totalizadores.totaisDesatualizados[
+                "Versão não encontrada (Atualizar)"
+              ]++;
             } else {
               // If it's a different string, try to count under 'DESATUALIZADO_REVISAO' as fallback
               tagsAtualizacao.push(TipoDesatualizacao.DESATUALIZADO_REVISAO);
-              (totalizadores.totaisDesatualizados as any)[
-                TipoDesatualizacao.DESATUALIZADO_REVISAO
-              ]++;
+              totalizadores.totaisDesatualizados["Desatualizado (Revisão)"]++;
             }
           }
 
